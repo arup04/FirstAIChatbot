@@ -13,8 +13,7 @@ llm = HuggingFaceEndpoint(
 model = ChatHuggingFace(llm=llm)
 
 # Streamlit UI
-st.title("My Chatbot")
-st.header("My First AI Chatbot")
+st.title("AI Chatbot")
 
 # Initialize chat history
 if "messages" not in st.session_state:
