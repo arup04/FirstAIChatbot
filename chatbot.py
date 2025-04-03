@@ -1,22 +1,14 @@
 import streamlit as st
-import os
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+# Load API token from Streamlit Secrets
+API_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
 
-# Ensure the API token is set
-if not API_TOKEN:
-    st.error("Hugging Face API token is missing. Set it in the environment.")
-    st.stop()
-
-# Initialize the model with API token
+# Initialize Hugging Face model
 llm = HuggingFaceEndpoint(
     repo_id="HuggingFaceH4/zephyr-7b-alpha",
     task="text-generation",
-    huggingfacehub_api_token=API_TOKEN  # ✅ Pass API token explicitly
+    huggingfacehub_api_token=API_TOKEN
 )
 model = ChatHuggingFace(llm=llm)
 
@@ -41,8 +33,8 @@ if prompt := st.chat_input("Enter your Prompt"):
         st.markdown(prompt)
 
     try:
-        result = model.invoke(prompt)  # Get AI response
-        response = result.content if hasattr(result, 'content') else str(result)  # Handle response
+        result = model.invoke(prompt)
+        response = result.content if hasattr(result, 'content') else str(result)
 
         with st.chat_message("assistant"):
             st.markdown(response)
@@ -50,4 +42,4 @@ if prompt := st.chat_input("Enter your Prompt"):
         st.session_state.messages.append({"role": "assistant", "content": response})
 
     except Exception as e:
-        st.error(f"Error: {e}")  # Display error if API call fails
+        st.error(f"Error: {e}")
