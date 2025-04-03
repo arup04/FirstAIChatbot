@@ -1,17 +1,26 @@
 import streamlit as st
+import os
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
+API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Initialize the model (keep your existing code)
+# Ensure the API token is set
+if not API_TOKEN:
+    st.error("Hugging Face API token is missing. Set it in the environment.")
+    st.stop()
+
+# Initialize the model with API token
 llm = HuggingFaceEndpoint(
     repo_id="HuggingFaceH4/zephyr-7b-alpha",
-    task="text-generation"
+    task="text-generation",
+    huggingfacehub_api_token=API_TOKEN  # ✅ Pass API token explicitly
 )
 model = ChatHuggingFace(llm=llm)
 
-# Set up the chat interface
+# Streamlit UI
 st.title("My Chatbot")
 st.header("My First AI Chatbot")
 
@@ -19,25 +28,26 @@ st.header("My First AI Chatbot")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat messages
+# Display previous messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Accept user input
 if prompt := st.chat_input("Enter your Prompt"):
-    # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message
+    
     with st.chat_message("user"):
         st.markdown(prompt)
-    
-    # Get AI response
-    result = model.invoke(prompt)
-    
-    # Display AI response
-    with st.chat_message("assistant"):
-        st.markdown(result.content)
-    
-    # Add AI response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": result.content})
+
+    try:
+        result = model.invoke(prompt)  # Get AI response
+        response = result.content if hasattr(result, 'content') else str(result)  # Handle response
+
+        with st.chat_message("assistant"):
+            st.markdown(response)
+
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+    except Exception as e:
+        st.error(f"Error: {e}")  # Display error if API call fails
